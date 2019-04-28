@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(e00-glew_and_glfw)
+
+add_definitions("-std=c++11")
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
+set(
+    PROJECT_SOURCES
+    src/main.cpp
+)
+
+add_executable(${CMAKE_PROJECT_NAME} ${PROJECT_SOURCES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${CONAN_LIBS})
+
+add_custom_target(
+    run
+    COMMAND ${CMAKE_PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
