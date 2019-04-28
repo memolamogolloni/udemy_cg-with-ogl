@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(e00-glew_and_glfw)
+project(e01-first_triangle)
 
 add_definitions("-std=c++11")
 
