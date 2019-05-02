@@ -11,6 +11,8 @@
 // Window dimensions
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
+const float PI = 3.14159265f;
+const float DEG2RAD = PI / 180.0f;
 
 GLuint VAO;
 GLuint VBO;
@@ -21,6 +23,7 @@ bool direction = true;
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.005f;
+float currAngle = 0.0f;
 
 // Vertex shader
 static const char *vShader = "\
@@ -215,6 +218,10 @@ int main() {
 		if (std::abs(triOffset) >= triMaxOffset) {
 			direction = !direction;
 		}
+
+		// Update rotation value
+		currAngle += 0.1f;
+		if (currAngle >= 360.0f) currAngle -= 360.0f;
 		
 		// RGBA clear color
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -225,7 +232,11 @@ int main() {
 			// Create a 4x4 matrix initialized to an identity matrix
 			glm::mat4 model;
 			// Multiply model by translation matrix
-			model = translate(model, glm::vec3(triOffset, triOffset, 0.0f));
+			model = translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+			// Multiply model by rotation matrix (as it's in screen coordinates by now,
+			// it will seem distorted)
+			model = rotate(model, currAngle * DEG2RAD, glm::vec3(0.0f, 0.0f, 1.0f));
+
 			// Send matrix pointer to shader as uniform. Arguments:
 			//	* Uniform id
 			//	* Count of matrices sent through the pointer

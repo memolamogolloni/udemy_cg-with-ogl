@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
-project(e03-translate)
+project(e04-rotation)
 
 add_definitions("-std=c++11")
 
