@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(e01-first_triangle)
+project(e02-uniforms)
 
 add_definitions("-std=c++11")
 

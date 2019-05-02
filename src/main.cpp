@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <cmath>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,25 +12,33 @@ const GLint HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint shader;
+GLuint uniformXMove;
+
+bool direction = true;
+float triOffset = 0.0f;
+float triMaxOffset = 0.7f;
+float triIncrement = 0.005f;
 
 // Vertex shader
 static const char *vShader = "\
-#version 330																									\n\
-																															\n\
-layout (location = 0) in vec3 pos;														\n\
-																															\n\
-void main() {																									\n\
-	gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);								\n\
+#version 330																												\n\
+																																		\n\
+layout (location = 0) in vec3 pos;																	\n\
+																																		\n\
+uniform float xMove;																								\n\
+																																		\n\
+void main() {																												\n\
+	gl_Position = vec4(pos.x * 0.4 + xMove, pos.y * 0.4, pos.z, 1.0);	\n\
 }";
 
 // Fragment shader
 static const char *fShader = "\
-#version 130																									\n\
-																															\n\
-out vec4 colour;																							\n\
-																															\n\
-void main() {																									\n\
-	colour = vec4(1.0, 0.0, 0.0, 1.0);													\n\
+#version 130																												\n\
+																																		\n\
+out vec4 colour;																										\n\
+																																		\n\
+void main() {																												\n\
+	colour = vec4(1.0, 0.0, 0.0, 1.0);																\n\
 }";
 
 void addShader(GLuint programId, const char* shaderSource, GLenum shaderType) {
@@ -103,7 +112,8 @@ void compileShaders() {
 		return;
 	}
 
-	glValidateProgram(shader);
+	// Get id of the uniform from vertex shader
+	uniformXMove = glGetUniformLocation(shader, "xMove");
 };
 
 
@@ -185,7 +195,6 @@ int main() {
 	// Create viewport
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
-
 	/* MAIN APP LOOP */
 	createTriangle();
 	compileShaders();
@@ -194,12 +203,24 @@ int main() {
 		// Get user input
 		glfwPollEvents();
 
+		// Update triangle position 
+		if (direction) {
+			triOffset += triIncrement;
+		} else {
+			triOffset -= triIncrement;
+		}
+		if (std::abs(triOffset) >= triMaxOffset) {
+			direction = !direction;
+		}
+		
 		// RGBA clear color
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Enable the shader
 		glUseProgram(shader);
+			// Send uniform value to shader
+			glUniform1f(uniformXMove, triOffset);
 			// Bind VAO
 			glBindVertexArray(VAO);
 				// Draw array in VAO. Arguments:
