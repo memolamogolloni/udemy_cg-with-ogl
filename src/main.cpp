@@ -4,6 +4,9 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
 const GLint WIDTH = 800;
@@ -12,7 +15,7 @@ const GLint HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint shader;
-GLuint uniformXMove;
+GLuint uniformModel;
 
 bool direction = true;
 float triOffset = 0.0f;
@@ -25,10 +28,10 @@ static const char *vShader = "\
 																																		\n\
 layout (location = 0) in vec3 pos;																	\n\
 																																		\n\
-uniform float xMove;																								\n\
+uniform mat4 model;																									\n\
 																																		\n\
 void main() {																												\n\
-	gl_Position = vec4(pos.x * 0.4 + xMove, pos.y * 0.4, pos.z, 1.0);	\n\
+	gl_Position = model * vec4(pos.x * 0.4, pos.y * 0.4, pos.z, 1.0);	\n\
 }";
 
 // Fragment shader
@@ -113,7 +116,7 @@ void compileShaders() {
 	}
 
 	// Get id of the uniform from vertex shader
-	uniformXMove = glGetUniformLocation(shader, "xMove");
+	uniformModel = glGetUniformLocation(shader, "model");
 };
 
 
@@ -219,8 +222,16 @@ int main() {
 
 		// Enable the shader
 		glUseProgram(shader);
-			// Send uniform value to shader
-			glUniform1f(uniformXMove, triOffset);
+			// Create a 4x4 matrix initialized to an identity matrix
+			glm::mat4 model;
+			// Multiply model by translation matrix
+			model = translate(model, glm::vec3(triOffset, triOffset, 0.0f));
+			// Send matrix pointer to shader as uniform. Arguments:
+			//	* Uniform id
+			//	* Count of matrices sent through the pointer
+			//	* Transpose or not
+			//	* Pointer to the 4x4 matrix
+			glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 			// Bind VAO
 			glBindVertexArray(VAO);
 				// Draw array in VAO. Arguments:
