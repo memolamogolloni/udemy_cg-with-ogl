@@ -24,6 +24,11 @@ float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.005f;
 float currAngle = 0.0f;
+bool sizeDirection = true;
+float sizeIncrement = 0.005f;
+float currSize = 0.4f;
+float maxSize = 0.8f;
+float minSize = 0.1f;
 
 // Vertex shader
 static const char *vShader = "\
@@ -34,7 +39,7 @@ layout (location = 0) in vec3 pos;																	\n\
 uniform mat4 model;																									\n\
 																																		\n\
 void main() {																												\n\
-	gl_Position = model * vec4(pos.x * 0.4, pos.y * 0.4, pos.z, 1.0);	\n\
+	gl_Position = model * vec4(pos.x, pos.y, pos.z, 1.0);							\n\
 }";
 
 // Fragment shader
@@ -209,7 +214,7 @@ int main() {
 		// Get user input
 		glfwPollEvents();
 
-		// Update triangle position 
+		// Update position value
 		if (direction) {
 			triOffset += triIncrement;
 		} else {
@@ -222,6 +227,16 @@ int main() {
 		// Update rotation value
 		currAngle += 0.1f;
 		if (currAngle >= 360.0f) currAngle -= 360.0f;
+
+		// Update scale value 
+		if (sizeDirection) {
+			currSize += sizeIncrement;
+		} else {
+			currSize -= sizeIncrement;
+		}
+		if (currSize > maxSize || currSize < minSize) {
+			sizeDirection = !sizeDirection;
+		}
 		
 		// RGBA clear color
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -236,6 +251,8 @@ int main() {
 			// Multiply model by rotation matrix (as it's in screen coordinates by now,
 			// it will seem distorted)
 			model = rotate(model, currAngle * DEG2RAD, glm::vec3(0.0f, 0.0f, 1.0f));
+			// Multiply the model by the scale matrix (same as rotate)
+			model = scale(model, glm::vec3(currSize, currSize, 1.0f));
 
 			// Send matrix pointer to shader as uniform. Arguments:
 			//	* Uniform id
