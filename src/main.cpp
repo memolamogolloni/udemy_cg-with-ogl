@@ -16,6 +16,7 @@ const float DEG2RAD = PI / 180.0f;
 
 GLuint VAO;
 GLuint VBO;
+GLuint IBO;
 GLuint shader;
 GLuint uniformModel;
 
@@ -23,7 +24,9 @@ bool direction = true;
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.005f;
+
 float currAngle = 0.0f;
+float currAngleIncrement = 0.2;
 bool sizeDirection = true;
 float sizeIncrement = 0.005f;
 float currSize = 0.4f;
@@ -41,12 +44,12 @@ uniform mat4 model;																									\n\
 																																		\n\
 void main() {																												\n\
 	gl_Position = model * vec4(pos.x, pos.y, pos.z, 1.0);							\n\
-	vCol = vec4((pos + 1) / 2.0, 1.0);																\n\
+	vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0);													\n\
 }";
 
 // Fragment shader
 static const char *fShader = "\
-#version 130																												\n\
+#version 330																												\n\
 																																		\n\
 in vec4 vCol;																												\n\
 out vec4 colour;																										\n\
@@ -132,8 +135,15 @@ void compileShaders() {
 
 
 void createTriangle() {
+	unsigned int indices[] = {
+		0, 3, 1,
+		1, 3, 2,
+		2, 3, 0,
+		0, 1, 2
+	};
 	GLfloat vertices[] = {
 		-1.0f, -1.0f, 0.0f,
+		0.0f, -1.0f, 1.0f,
 		1.0f, -1.0f, 0.0f,
 		0.0f, 1.0f, 0.0f
 	};
@@ -141,6 +151,11 @@ void createTriangle() {
 	// Generate and bind VAO
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
+		// Generate, bind and indices buffer data
+		glGenBuffers(1, &IBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 		// Generate and bind, VBO
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -160,6 +175,11 @@ void createTriangle() {
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		// Enable vertex attributes at position 0
 		glEnableVertexAttribArray(0);
+		// Unbind VBO
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		// Unbind IBO
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		// 
 	// Unbind VAO
 	glBindVertexArray(0);
 
@@ -206,6 +226,9 @@ int main() {
 		return 1;
 	}
 
+	// Enable depth test
+	glEnable(GL_DEPTH_TEST);
+
 	// Create viewport
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
@@ -228,7 +251,7 @@ int main() {
 		}
 
 		// Update rotation value
-		currAngle += 0.1f;
+		currAngle += currAngleIncrement;
 		if (currAngle >= 360.0f) currAngle -= 360.0f;
 
 		// Update scale value 
@@ -243,19 +266,19 @@ int main() {
 		
 		// RGBA clear color
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Enable the shader
 		glUseProgram(shader);
 			// Create a 4x4 matrix initialized to an identity matrix
 			glm::mat4 model;
 			// Multiply model by translation matrix
-			model = translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+			// model = translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
 			// Multiply model by rotation matrix (as it's in screen coordinates by now,
 			// it will seem distorted)
-			model = rotate(model, currAngle * DEG2RAD, glm::vec3(0.0f, 0.0f, 1.0f));
+			model = rotate(model, currAngle * DEG2RAD, glm::vec3(0.0f, 1.0f, 0.0f));
 			// Multiply the model by the scale matrix (same as rotate)
-			model = scale(model, glm::vec3(currSize, currSize, 1.0f));
+			model = scale(model, glm::vec3(0.4f));
 
 			// Send matrix pointer to shader as uniform. Arguments:
 			//	* Uniform id
@@ -269,7 +292,17 @@ int main() {
 				//	* Drawing mode
 				//	* Offset
 				//	* Size of the array
-				glDrawArrays(GL_TRIANGLES, 0, 3);
+				// Bind IBO
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+				// Draw IBO
+				// * Drawing mode
+				// * Array size
+				// * IBO type of variable
+				// * Pointer to the indices (0 indicates none)
+				glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+				// Unbind IBO
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			// Unbint VAO
 			glBindVertexArray(0);
 		glUseProgram(0);
 
