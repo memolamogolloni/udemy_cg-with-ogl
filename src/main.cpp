@@ -19,6 +19,7 @@ GLuint VBO;
 GLuint IBO;
 GLuint shader;
 GLuint uniformModel;
+GLuint uniformProjection;
 
 bool direction = true;
 float triOffset = 0.0f;
@@ -26,7 +27,8 @@ float triMaxOffset = 0.7f;
 float triIncrement = 0.005f;
 
 float currAngle = 0.0f;
-float currAngleIncrement = 0.2;
+float currAngleIncrement = 0.8;
+
 bool sizeDirection = true;
 float sizeIncrement = 0.005f;
 float currSize = 0.4f;
@@ -41,9 +43,10 @@ layout (location = 0) in vec3 pos;																	\n\
 out vec4 vCol;																											\n\
 																																		\n\
 uniform mat4 model;																									\n\
+uniform mat4 projection;																						\n\
 																																		\n\
 void main() {																												\n\
-	gl_Position = model * vec4(pos.x, pos.y, pos.z, 1.0);							\n\
+	gl_Position = projection * model * vec4(pos.x, pos.y, pos.z, 1.0);\n\
 	vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0);													\n\
 }";
 
@@ -131,6 +134,7 @@ void compileShaders() {
 
 	// Get id of the uniform from vertex shader
 	uniformModel = glGetUniformLocation(shader, "model");
+	uniformProjection = glGetUniformLocation(shader, "projection");
 };
 
 
@@ -232,9 +236,16 @@ int main() {
 	// Create viewport
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
-	/* MAIN APP LOOP */
+	/* MAIN APP LOGIC */
 	createTriangle();
 	compileShaders();
+
+	// Create perspective projection matrix. Arguments:
+	//	* FOV
+	//	* Aspect ratio
+	//	* Near plane
+	//	* Far plane
+	glm::mat4 projection = glm::perspective(45.0f, (GLfloat)bufferWidth / (GLfloat)bufferHeight, 0.1f, 100.0f);
 
 	while (!glfwWindowShouldClose(mainWindow)) {
 		// Get user input
@@ -273,19 +284,22 @@ int main() {
 			// Create a 4x4 matrix initialized to an identity matrix
 			glm::mat4 model;
 			// Multiply model by translation matrix
-			// model = translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+			model = translate(model, glm::vec3(0.0f, triOffset, -2.5f));
 			// Multiply model by rotation matrix (as it's in screen coordinates by now,
 			// it will seem distorted)
 			model = rotate(model, currAngle * DEG2RAD, glm::vec3(0.0f, 1.0f, 0.0f));
 			// Multiply the model by the scale matrix (same as rotate)
 			model = scale(model, glm::vec3(0.4f));
 
-			// Send matrix pointer to shader as uniform. Arguments:
+			// Send model matrix pointer to shader as uniform. Arguments:
 			//	* Uniform id
 			//	* Count of matrices sent through the pointer
 			//	* Transpose or not
 			//	* Pointer to the 4x4 matrix
 			glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+			// Send projection matrix pointer so shader as uniform
+			glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+
 			// Bind VAO
 			glBindVertexArray(VAO);
 				// Draw array in VAO. Arguments:
