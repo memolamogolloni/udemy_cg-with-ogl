@@ -2,6 +2,7 @@
 
 #### Requires:
 
+* **[Make](https://www.gnu.org/software/make/)**
 * **[CMake](https://cmake.org/)**
 * **[Conan Package Manager](https://conan.io/)**
 
