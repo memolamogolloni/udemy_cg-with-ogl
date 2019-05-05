@@ -14,6 +14,7 @@
 #include "Mesh.h"
 #include "Shader.h"
 
+
 // Window dimensions
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;

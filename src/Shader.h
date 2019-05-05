@@ -7,8 +7,7 @@
 
 #include <GL/glew.h>
 
-class Shader
-{
+class Shader {
 public:
 	Shader();
 	~Shader();
